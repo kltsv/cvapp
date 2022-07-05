@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'cv_icons.dart';
+
 const _tgAvatar = 'assets/ava.jpeg';
 
 void main() => runApp(const App());
@@ -47,11 +49,17 @@ class HomePage extends StatelessWidget {
                               children: const [
                                 Text(
                                   'Сергей Кольцов',
-                                  style: TextStyle(fontSize: 28),
+                                  style: TextStyle(
+                                    fontSize: 28,
+                                    fontFamily: 'Roboto',
+                                  ),
                                 ),
                                 Text(
                                   'Яндекс',
-                                  style: TextStyle(fontSize: 18),
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontFamily: 'Roboto',
+                                  ),
                                 ),
                               ],
                             ),
@@ -66,8 +74,7 @@ class HomePage extends StatelessWidget {
                                   iconSize: 32,
                                   onPressed: () {},
                                   icon: const Icon(
-                                    // TODO telegram
-                                    Icons.cloud_circle,
+                                    CVIcons.telegram,
                                   ),
                                 ),
                               ),
@@ -77,8 +84,7 @@ class HomePage extends StatelessWidget {
                                   iconSize: 32,
                                   onPressed: () {},
                                   icon: const Icon(
-                                    // TODO github
-                                    Icons.account_circle,
+                                    CVIcons.github,
                                   ),
                                 ),
                               ),
@@ -88,8 +94,7 @@ class HomePage extends StatelessWidget {
                                   iconSize: 32,
                                   onPressed: () {},
                                   icon: const Icon(
-                                    // TODO email
-                                    Icons.circle_notifications,
+                                    CVIcons.email,
                                   ),
                                 ),
                               ),

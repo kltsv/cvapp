@@ -20,3 +20,10 @@ flutter:
   uses-material-design: true
   assets:
     - assets/ava.jpeg
+  fonts:
+    - family: Roboto
+      fonts:
+        - asset: fonts/Roboto-Light.ttf
+    - family: CVIcons
+      fonts:
+        - asset: icons/CVIcons.ttf
