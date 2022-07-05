@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'cv_icons.dart';
+import 'error_handler.dart';
+import 'logger.dart';
 
 const _tgAvatar = 'assets/ava.jpeg';
 
@@ -14,7 +18,15 @@ class Links {
   const Links._();
 }
 
-void main() => runApp(const App());
+void main() {
+  runZonedGuarded(() {
+    initLogger();
+    logger.info('Start main');
+
+    ErrorHandler.init();
+    runApp(const App());
+  }, ErrorHandler.recordError);
+}
 
 class App extends StatefulWidget {
   const App({Key? key}) : super(key: key);
@@ -28,28 +40,35 @@ class _AppState extends State<App> {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    builder: (context, child) => Material(
-      child: Stack(
-        children: [
-          child ?? const SizedBox.shrink(),
-          Align(
-            alignment: Alignment.topLeft,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: IconButton(
-                onPressed: () => setState(() => _isDark = !_isDark),
-                icon: Icon(
-                  _isDark ? Icons.sunny : Icons.nightlight_round,
+        builder: (context, child) => Material(
+          child: Stack(
+            children: [
+              child ?? const SizedBox.shrink(),
+              Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: IconButton(
+                    onPressed: () {
+                      final newMode = !_isDark;
+                      logger.info(
+                        'Switch theme mode: '
+                        '${_isDark.asThemeName} -> ${newMode.asThemeName}',
+                      );
+                      setState(() => _isDark = newMode);
+                    },
+                    icon: Icon(
+                      _isDark ? Icons.sunny : Icons.nightlight_round,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          )
-        ],
-      ),
-    ),
-    theme: _isDark ? ThemeData.dark() : ThemeData.light(),
-    home: const HomePage(),
-  );
+              )
+            ],
+          ),
+        ),
+        theme: _isDark ? ThemeData.dark() : ThemeData.light(),
+        home: const HomePage(),
+      );
 }
 
 class HomePage extends StatelessWidget {
@@ -167,14 +186,20 @@ class LinksWidget extends StatelessWidget {
           flex: 2,
           child: LinkIcon(
             icon: CVIcons.telegram,
-            onPressed: () => launchUrl(Uri.parse(Links.telegram)),
+            onPressed: () {
+              logger.info('Open Telegram: ${Links.telegram}');
+              launchUrl(Uri.parse(Links.telegram));
+            },
           ),
         ),
         Flexible(
           flex: 2,
           child: LinkIcon(
             icon: CVIcons.github,
-            onPressed: () => launchUrl(Uri.parse(Links.github)),
+            onPressed: () {
+              logger.info('Open Github: ${Links.github}');
+              launchUrl(Uri.parse(Links.github));
+            },
           ),
         ),
         Flexible(
@@ -182,6 +207,7 @@ class LinksWidget extends StatelessWidget {
           child: LinkIcon(
             icon: CVIcons.email,
             onPressed: () {
+              logger.info('Copy email: ${Links.email}');
               Clipboard.setData(
                 const ClipboardData(text: Links.email),
               );
@@ -244,4 +270,8 @@ class LinkIcon extends StatelessWidget {
       icon: Icon(icon),
     );
   }
+}
+
+extension _BoolToThemeName on bool {
+  String get asThemeName => this ? 'dark' : 'light';
 }
