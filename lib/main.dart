@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'cv_icons.dart';
 import 'error_handler.dart';
 import 'logger.dart';
+import 's.dart';
 
 const _tgAvatar = 'assets/ava.jpeg';
 
@@ -40,6 +42,13 @@ class _AppState extends State<App> {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: S.supportedLocales,
         builder: (context, child) => Material(
           child: Stack(
             children: [
@@ -157,14 +166,14 @@ class IdentityWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
+      children: [
         Text(
-          'Сергей Кольцов',
-          style: TextStyle(fontSize: 28, fontFamily: 'Roboto'),
+          S.of(context).name,
+          style: const TextStyle(fontSize: 28, fontFamily: 'Roboto'),
         ),
         Text(
-          'Яндекс',
-          style: TextStyle(fontSize: 18, fontFamily: 'Roboto'),
+          S.of(context).company,
+          style: const TextStyle(fontSize: 18, fontFamily: 'Roboto'),
         ),
       ],
     );
@@ -212,8 +221,8 @@ class LinksWidget extends StatelessWidget {
                 const ClipboardData(text: Links.email),
               );
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Скопировано'),
+                SnackBar(
+                  content: Text(S.of(context).copied),
                 ),
               );
             },
