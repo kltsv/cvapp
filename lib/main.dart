@@ -39,6 +39,7 @@ class App extends StatefulWidget {
 
 class _AppState extends State<App> {
   var _isDark = false;
+  var _locale = S.en;
 
   @override
   Widget build(BuildContext context) => MaterialApp(
@@ -49,27 +50,48 @@ class _AppState extends State<App> {
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: S.supportedLocales,
+        locale: _locale,
         builder: (context, child) => Material(
           child: Stack(
             children: [
               child ?? const SizedBox.shrink(),
               Align(
                 alignment: Alignment.topLeft,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: IconButton(
-                    onPressed: () {
-                      final newMode = !_isDark;
-                      logger.info(
-                        'Switch theme mode: '
-                        '${_isDark.asThemeName} -> ${newMode.asThemeName}',
-                      );
-                      setState(() => _isDark = newMode);
-                    },
-                    icon: Icon(
-                      _isDark ? Icons.sunny : Icons.nightlight_round,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: IconButton(
+                        onPressed: () {
+                          final newMode = !_isDark;
+                          logger.info(
+                            'Switch theme mode: '
+                            '${_isDark.asThemeName} -> ${newMode.asThemeName}',
+                          );
+                          setState(() => _isDark = newMode);
+                        },
+                        icon: Icon(
+                          _isDark ? Icons.sunny : Icons.nightlight_round,
+                        ),
+                      ),
                     ),
-                  ),
+                    Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: InkResponse(
+                        child: Text(_locale.languageCode.toUpperCase()),
+                        onTap: () {
+                          final newLocale = S.isEn(_locale) ? S.ru : S.en;
+                          logger.info(
+                            'Switch language: '
+                            '${_locale.languageCode} -> ${newLocale.languageCode}',
+                          );
+                          setState(() => _locale = newLocale);
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               )
             ],

@@ -15,5 +15,7 @@ class S {
   static AppLocalizations of(BuildContext context) =>
       AppLocalizations.of(context)!;
 
+  static bool isEn(Locale locale) => locale == en;
+
   const S._();
 }
