@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'app_theme.dart';
 import 'cv_icons.dart';
 import 'error_handler.dart';
 import 'logger.dart';
@@ -97,7 +98,7 @@ class _AppState extends State<App> {
             ],
           ),
         ),
-        theme: _isDark ? ThemeData.dark() : ThemeData.light(),
+        theme: AppTheme.theme(_isDark),
         home: const HomePage(),
       );
 }
@@ -191,11 +192,11 @@ class IdentityWidget extends StatelessWidget {
       children: [
         Text(
           S.of(context).name,
-          style: const TextStyle(fontSize: 28, fontFamily: 'Roboto'),
+          style: const TextStyle(fontSize: 28),
         ),
         Text(
           S.of(context).company,
-          style: const TextStyle(fontSize: 18, fontFamily: 'Roboto'),
+          style: const TextStyle(fontSize: 18),
         ),
       ],
     );
@@ -296,7 +297,6 @@ class LinkIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      iconSize: 32,
       onPressed: onPressed,
       icon: Icon(icon),
     );
