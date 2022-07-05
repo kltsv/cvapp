@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'cv_icons.dart';
@@ -103,7 +104,16 @@ class HomePage extends StatelessWidget {
                                 flex: 2,
                                 child: IconButton(
                                   iconSize: 32,
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    Clipboard.setData(
+                                      const ClipboardData(text: Links.email),
+                                    );
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Скопировано'),
+                                      ),
+                                    );
+                                  },
                                   icon: const Icon(
                                     CVIcons.email,
                                   ),
