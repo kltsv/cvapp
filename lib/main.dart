@@ -1,10 +1,14 @@
 import 'dart:async';
 
+import 'package:cvapp/components/text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'app_theme.dart';
+import 'components/card_container.dart';
+import 'components/link_icon.dart';
 import 'cv_icons.dart';
 import 'error_handler.dart';
 import 'logger.dart';
@@ -80,7 +84,7 @@ class _AppState extends State<App> {
                     Padding(
                       padding: const EdgeInsets.all(12.0),
                       child: InkResponse(
-                        child: Text(_locale.languageCode.toUpperCase()),
+                        child: AppText(_locale.languageCode.toUpperCase()),
                         onTap: () {
                           final newLocale = S.isEn(_locale) ? S.ru : S.en;
                           logger.info(
@@ -97,7 +101,7 @@ class _AppState extends State<App> {
             ],
           ),
         ),
-        theme: _isDark ? ThemeData.dark() : ThemeData.light(),
+        theme: AppTheme.theme(_isDark),
         home: const HomePage(),
       );
 }
@@ -189,14 +193,8 @@ class IdentityWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          S.of(context).name,
-          style: const TextStyle(fontSize: 28, fontFamily: 'Roboto'),
-        ),
-        Text(
-          S.of(context).company,
-          style: const TextStyle(fontSize: 18, fontFamily: 'Roboto'),
-        ),
+        AppTitle(S.of(context).name),
+        AppSubtitle(S.of(context).company),
       ],
     );
   }
@@ -244,7 +242,7 @@ class LinksWidget extends StatelessWidget {
               );
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(S.of(context).copied),
+                  content: AppText(S.of(context).copied),
                 ),
               );
             },
@@ -252,53 +250,6 @@ class LinksWidget extends StatelessWidget {
         ),
         const Spacer(flex: 1),
       ],
-    );
-  }
-}
-
-class CVCardContainer extends StatelessWidget {
-  static const _borderRadius = 16.0;
-  final Widget child;
-
-  const CVCardContainer({
-    Key? key,
-    required this.child,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 1.8,
-      child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(_borderRadius),
-        ),
-        elevation: 8.0,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(_borderRadius),
-          child: child,
-        ),
-      ),
-    );
-  }
-}
-
-class LinkIcon extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onPressed;
-
-  const LinkIcon({
-    Key? key,
-    required this.icon,
-    required this.onPressed,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      iconSize: 32,
-      onPressed: onPressed,
-      icon: Icon(icon),
     );
   }
 }
