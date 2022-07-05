@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'cv_icons.dart';
+import 'error_handler.dart';
 import 'logger.dart';
 
 const _tgAvatar = 'assets/ava.jpeg';
@@ -16,8 +19,13 @@ class Links {
 }
 
 void main() {
-  initLogger();
-  runApp(const App());
+  runZonedGuarded(() {
+    initLogger();
+    logger.info('Start main');
+
+    ErrorHandler.init();
+    runApp(const App());
+  }, ErrorHandler.recordError);
 }
 
 class App extends StatefulWidget {
