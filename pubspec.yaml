@@ -21,6 +21,8 @@ dev_dependencies:
 
   flutter_lints: ^2.0.0
 
+  flutter_launcher_icons: ^0.9.3
+
 flutter:
   generate: true
   uses-material-design: true
@@ -33,3 +35,9 @@ flutter:
     - family: CVIcons
       fonts:
         - asset: icons/CVIcons.ttf
+
+# run: flutter pub run flutter_launcher_icons:main
+flutter_icons:
+  android: "ic_launcher"
+  ios: true
+  image_path: "assets/icon.png"
