@@ -1,16 +1,36 @@
-# cvapp
+# CVApp
 
-CV application
+Простое приложение-визитка для вводной лекции Школы Мобильной Разработки Яндекса 2022.
 
-## Getting Started
+![Скриншот](docs/image.png)
 
-This project is a starting point for a Flutter application.
+# Содержание
 
-A few resources to get you started if this is your first Flutter project:
+Процесс написания приложения разбит на два майлстоуна:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## 1. Работа с виджетами
+[Майлстоун с пуллреквестами](https://github.com/kltsv/cvapp/milestone/1?closed=1)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. [Верстка с помощью виджетов фреймворка](https://github.com/kltsv/cvapp/pull/1)
+2. [Визуальные доработки (шрифты/иконки) и действия](https://github.com/kltsv/cvapp/pull/2)
+3. [Декомпозиция UI с помощью StatelessWidget](https://github.com/kltsv/cvapp/pull/3)
+4. [Реализация тёмной темы с помощью StatefulWidget](https://github.com/kltsv/cvapp/pull/4)
+
+## 2. Начальная подготовка приложения
+[Майлстоун с пуллреквестами](https://github.com/kltsv/cvapp/milestone/2?closed=1)
+
+1. [Настройка линтера, логгера, обработки ошибок](https://github.com/kltsv/cvapp/pull/5)
+2. [Интернационализация приложения](https://github.com/kltsv/cvapp/pull/6)
+3. [Централизованная работа с темой приложения](https://github.com/kltsv/cvapp/pull/7)
+4. [Генерация иконок](https://github.com/kltsv/cvapp/pull/8)
+
+# Полезные материалы
+
+* [Официальная документация Flutter](https://flutter.dev)
+* [Официальная документация Dart](https://dart.dev)
+* [Главное хранилище Dart/Flutter библиотек](https://pub.dev)
+* [Dartpad для онлайн-экспериментов с Dart/Flutter](https://dartpad.dev)
+* [Официальный Youtube-канал Flutter](https://www.youtube.com/c/flutterdev)
+* [Flutter в Школе Мобильной Разработки Яндекса 2021](https://www.youtube.com/playlist?list=PLQC2_0cDcSKBB4F8y-V_lB2HiFYSWIgYW)
+* [DartUp!](https://www.youtube.com/playlist?list=PLxcvsYzLfaTBFHePQCdKmZM6MCqN7OsGE)
+* [Репозиторий-сборник Flutter Awesome](https://github.com/Solido/awesome-flutter) 
