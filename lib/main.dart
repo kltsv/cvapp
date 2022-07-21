@@ -55,50 +55,52 @@ class _AppState extends State<App> {
         ],
         supportedLocales: S.supportedLocales,
         locale: _locale,
-        builder: (context, child) => Material(
-          child: Stack(
-            children: [
-              child ?? const SizedBox.shrink(),
-              Align(
-                alignment: Alignment.topLeft,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: IconButton(
-                        onPressed: () {
-                          final newMode = !_isDark;
-                          logger.info(
-                            'Switch theme mode: '
-                            '${_isDark.asThemeName} -> ${newMode.asThemeName}',
-                          );
-                          setState(() => _isDark = newMode);
-                        },
-                        icon: Icon(
-                          _isDark ? Icons.sunny : Icons.nightlight_round,
+        builder: (context, child) => SafeArea(
+          child: Material(
+            child: Stack(
+              children: [
+                child ?? const SizedBox.shrink(),
+                Align(
+                  alignment: Alignment.topLeft,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: IconButton(
+                          onPressed: () {
+                            final newMode = !_isDark;
+                            logger.info(
+                              'Switch theme mode: '
+                              '${_isDark.asThemeName} -> ${newMode.asThemeName}',
+                            );
+                            setState(() => _isDark = newMode);
+                          },
+                          icon: Icon(
+                            _isDark ? Icons.sunny : Icons.nightlight_round,
+                          ),
                         ),
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: InkResponse(
-                        child: AppText(_locale.languageCode.toUpperCase()),
-                        onTap: () {
-                          final newLocale = S.isEn(_locale) ? S.ru : S.en;
-                          logger.info(
-                            'Switch language: '
-                            '${_locale.languageCode} -> ${newLocale.languageCode}',
-                          );
-                          setState(() => _locale = newLocale);
-                        },
+                      Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: InkResponse(
+                          child: AppText(_locale.languageCode.toUpperCase()),
+                          onTap: () {
+                            final newLocale = S.isEn(_locale) ? S.ru : S.en;
+                            logger.info(
+                              'Switch language: '
+                              '${_locale.languageCode} -> ${newLocale.languageCode}',
+                            );
+                            setState(() => _locale = newLocale);
+                          },
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              )
-            ],
+                    ],
+                  ),
+                )
+              ],
+            ),
           ),
         ),
         theme: AppTheme.theme(_isDark),
