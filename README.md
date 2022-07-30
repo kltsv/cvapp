@@ -1,7 +1,9 @@
 # CVApp
 
 Простое приложение-визитка для вводной лекции Школы Мобильной Разработки Яндекса 2022.
+
 [Лекция на Youtube](https://www.youtube.com/watch?v=enWUtDK__hg)
+
 [Слайды](docs/shmr_intro.pdf)
 
 ![Скриншот](docs/image.png)
