@@ -113,11 +113,14 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: Center(
-        child: Padding(
-          padding: EdgeInsets.all(14.0),
-          child: CVCard(),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 800, maxWidth: 800),
+          child: const Padding(
+            padding: EdgeInsets.all(14.0),
+            child: CVCard(),
+          ),
         ),
       ),
     );
@@ -195,8 +198,8 @@ class IdentityWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AppTitle(S.of(context).name),
-        AppSubtitle(S.of(context).company),
+        FittedBox(child: AppTitle(S.of(context).name)),
+        FittedBox(child: AppSubtitle(S.of(context).company)),
       ],
     );
   }
