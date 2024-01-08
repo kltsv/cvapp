@@ -18,8 +18,8 @@ const _tgAvatar = 'assets/ava.jpeg';
 
 class Links {
   static const github = 'https://github.com/kltsv';
-  static const telegram = 'https://t.me/ringov';
-  static const email = 'ringov@yandex-team.ru';
+  static const telegram = 'https://t.me/flutterbro';
+  static const email = 'srg.koltsov@yandex.ru';
 
   const Links._();
 }
