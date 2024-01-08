@@ -35,7 +35,7 @@ void main() {
 }
 
 class App extends StatefulWidget {
-  const App({Key? key}) : super(key: key);
+  const App({super.key});
 
   @override
   State<App> createState() => _AppState();
@@ -109,7 +109,7 @@ class _AppState extends State<App> {
 }
 
 class HomePage extends StatelessWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -125,16 +125,16 @@ class HomePage extends StatelessWidget {
 }
 
 class CVCard extends StatelessWidget {
-  const CVCard({Key? key}) : super(key: key);
+  const CVCard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return CVCardContainer(
+    return const CVCardContainer(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.max,
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: const [
+        children: [
           Flexible(
             flex: 3,
             child: InfoWidget(),
@@ -150,14 +150,14 @@ class CVCard extends StatelessWidget {
 }
 
 class InfoWidget extends StatelessWidget {
-  const InfoWidget({Key? key}) : super(key: key);
+  const InfoWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return const Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: const [
+      children: [
         Padding(
           padding: EdgeInsets.all(12.0),
           child: IdentityWidget(),
@@ -169,7 +169,7 @@ class InfoWidget extends StatelessWidget {
 }
 
 class AvatarWidget extends StatelessWidget {
-  const AvatarWidget({Key? key}) : super(key: key);
+  const AvatarWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -187,8 +187,8 @@ class AvatarWidget extends StatelessWidget {
 
 class IdentityWidget extends StatelessWidget {
   const IdentityWidget({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -204,8 +204,8 @@ class IdentityWidget extends StatelessWidget {
 
 class LinksWidget extends StatelessWidget {
   const LinksWidget({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

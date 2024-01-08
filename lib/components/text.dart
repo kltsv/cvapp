@@ -5,7 +5,7 @@ class AppTitle extends StatelessWidget {
 
   final String value;
 
-  const AppTitle(this.value, {Key? key}) : super(key: key);
+  const AppTitle(this.value, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +24,7 @@ class AppSubtitle extends StatelessWidget {
 
   final String value;
 
-  const AppSubtitle(this.value, {Key? key}) : super(key: key);
+  const AppSubtitle(this.value, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +40,7 @@ class AppText extends StatelessWidget {
 
   final String value;
 
-  const AppText(this.value, {Key? key}) : super(key: key);
+  const AppText(this.value, {super.key});
 
   @override
   Widget build(BuildContext context) {
