@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:cvapp/components/text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -25,13 +23,11 @@ class Links {
 }
 
 void main() {
-  runZonedGuarded(() {
-    initLogger();
-    logger.info('Start main');
+  initLogger();
+  logger.info('Start main');
+  ErrorHandler.init();
 
-    ErrorHandler.init();
-    runApp(const App());
-  }, ErrorHandler.recordError);
+  runApp(const App());
 }
 
 class App extends StatefulWidget {
