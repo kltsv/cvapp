@@ -1,10 +1,12 @@
 # CVApp
 
-Простое приложение-визитка для вводной лекции Школы Мобильной Разработки Яндекса 2022.
+Простое приложение-визитка для вводной лекции по Flutter.
 
 [Лекция на Youtube](https://www.youtube.com/watch?v=enWUtDK__hg)
 
 [Слайды](docs/shmr_intro.pdf)
+
+[Web](https://kltsv.github.io/cvapp/)
 
 ![Скриншот](docs/image.png)
 
@@ -36,5 +38,6 @@
 * [Dartpad для онлайн-экспериментов с Dart/Flutter](https://dartpad.dev)
 * [Официальный Youtube-канал Flutter](https://www.youtube.com/c/flutterdev)
 * [Flutter в Школе Мобильной Разработки Яндекса 2021](https://www.youtube.com/playlist?list=PLQC2_0cDcSKBB4F8y-V_lB2HiFYSWIgYW)
+* [Flutter в Школе Мобильной Разработки Яндекса 2023](https://www.youtube.com/playlist?list=PLIh9yLdjK2YepDyvvvHR-_Iv_YD-W-gSP)
 * [DartUp!](https://www.youtube.com/playlist?list=PLxcvsYzLfaTBFHePQCdKmZM6MCqN7OsGE)
 * [Репозиторий-сборник Flutter Awesome](https://github.com/Solido/awesome-flutter) 
