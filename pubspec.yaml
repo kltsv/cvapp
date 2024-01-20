@@ -14,7 +14,8 @@ dependencies:
 
   url_launcher: ^6.2.2
   logging: ^1.2.0
-  flip_card: ^0.7.0
+  ui_components:
+    path: packages/ui_components
 
 dev_dependencies:
   flutter_test:
