@@ -1,12 +1,10 @@
-import 'package:cvapp/components/text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:ui_components/ui_components.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'app_theme.dart';
-import 'components/card_container.dart';
-import 'components/link_icon.dart';
 import 'cv_icons.dart';
 import 'error_handler.dart';
 import 'logger.dart';
