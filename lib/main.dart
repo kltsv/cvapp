@@ -129,22 +129,43 @@ class CVCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const CVCardContainer(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.max,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Flexible(
-            flex: 3,
-            child: InfoWidget(),
-          ),
-          Flexible(
-            flex: 2,
-            child: AvatarWidget(),
-          ),
-        ],
-      ),
+      front: CVFront(),
+      // TODO add this for flipping cv card
+      // back: CVBack(),
     );
+  }
+}
+
+class CVFront extends StatelessWidget {
+  const CVFront({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.max,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Flexible(
+          flex: 3,
+          child: InfoWidget(),
+        ),
+        Flexible(
+          flex: 2,
+          child: AvatarWidget(),
+        ),
+      ],
+    );
+  }
+}
+
+class CVBack extends StatelessWidget {
+  const CVBack({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // TODO add any info you like
+    return const Center(child: Text('Hello world!'));
   }
 }
 
