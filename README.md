@@ -10,6 +10,12 @@
 
 ![Скриншот](docs/image.png)
 
+# Подготовка проекта
+
+1. Должен быть [установлен Dart](https://dart.dev/get-dart)
+2. Выполнить команду `dart setup.dart` (можно выполнять многократно)
+3. \[для Android Studio\] [Сконфигурировать](https://fvm.app/docs/getting_started/configuration) IDE для использования fvm
+
 # Содержание
 
 Процесс написания приложения разбит на два майлстоуна:
