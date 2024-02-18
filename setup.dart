@@ -1,7 +1,7 @@
 // ignore_for_file: avoid_print
 import 'dart:io';
 
-const _flutterVersion = '3.16.5';
+const _flutterVersion = '3.19.0';
 
 void main() {
   _log('Setup project');
