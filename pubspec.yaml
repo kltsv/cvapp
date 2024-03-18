@@ -12,7 +12,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
-  url_launcher: ^6.2.2
+  url_launcher: ^6.2.5
   logging: ^1.2.0
   ui_components:
     path: packages/ui_components
