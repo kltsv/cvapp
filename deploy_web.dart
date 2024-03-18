@@ -3,7 +3,11 @@ import 'dart:io';
 
 void main() {
   _log('Building flutter web');
-  final output = Process.runSync('flutter', ['build', 'web']);
+  final output = Process.runSync(
+    'fvm',
+    ['flutter', 'build', 'web'],
+    runInShell: true,
+  );
   _handleProcessResult(output);
 
   // Extract remote url
@@ -48,7 +52,7 @@ String? _handleProcessResult(ProcessResult result) {
     _log('Output: $out');
   } else {
     _log('Error: $err');
-    throw Exception('Exit code: ${result.exitCode}\n$err');
+    throw Exception('Exit code: ${result.exitCode}\n$out\n$err\n');
   }
   return out;
 }

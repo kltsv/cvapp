@@ -14,13 +14,24 @@
 
 1. Должен быть [установлен Dart](https://dart.dev/get-dart)
 2. Выполнить команду `dart setup.dart` (можно выполнять многократно)
-3. \[для Android Studio\] [Сконфигурировать](https://fvm.app/docs/getting_started/configuration) IDE для использования fvm
+3. \[для Android Studio\] [Сконфигурировать](https://fvm.app/docs/getting_started/configuration) IDE
+   для использования fvm
+
+# Деплой проекта в Github Pages
+
+1. Сделать форк проекта
+2. Склонировать проект локально
+3. Выполнить "Подготовку проекта"
+4. Выполнить `dart run deploy_web.dart`
+5. Перейти во вкладку Actions вашего форка и найти выполнившийся workflow — в нём будет указана
+   ссылка, куда задеплоился проект
 
 # Содержание
 
 Процесс написания приложения разбит на два майлстоуна:
 
 ## 1. Работа с виджетами
+
 [Майлстоун с пуллреквестами](https://github.com/kltsv/cvapp/milestone/1?closed=1)
 
 1. [Верстка с помощью виджетов фреймворка](https://github.com/kltsv/cvapp/pull/1)
@@ -29,6 +40,7 @@
 4. [Реализация тёмной темы с помощью StatefulWidget](https://github.com/kltsv/cvapp/pull/4)
 
 ## 2. Начальная подготовка приложения
+
 [Майлстоун с пуллреквестами](https://github.com/kltsv/cvapp/milestone/2?closed=1)
 
 1. [Настройка линтера, логгера, обработки ошибок](https://github.com/kltsv/cvapp/pull/5)
