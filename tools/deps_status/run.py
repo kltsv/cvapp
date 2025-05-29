@@ -123,16 +123,29 @@ def write_to_csv(data, filename):
         writer.writerows(data)
     logger.info(f"Report saved to {filename}")
 
+def write_raw_deps_output(output, filename):
+    """Write the raw output of 'dart pub deps' to a text file."""
+    output_dir = Path('build/output')
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    file_path = output_dir / filename
+    with open(file_path, 'w', encoding='utf-8') as f:
+        f.write(output)
+    logger.info(f"Raw dependencies output saved to {file_path}")
+
 def main():
     try:
         # Step 1: Get dependencies
         deps_output = run_dart_pub_deps()
         
-        # Step 2: Parse dependencies
+        # Step 2: Save raw dependencies output to a file
+        write_raw_deps_output(deps_output, 'deps.txt')
+
+        # Step 3: Parse dependencies
         dependencies = parse_dependencies(deps_output)
         
         results = []
-        # Steps 3-4: Process each dependency
+        # Steps 4-5: Process each dependency
         for dep_name, dep_version in dependencies.items():
             processed = process_dependency(dep_name, dep_version)
             if processed:
@@ -141,7 +154,7 @@ def main():
             else:
                 logger.warning(f"Skipped {dep_name} due to errors")
         
-        # Step 5: Save results
+        # Step 6: Save results
         write_to_csv(results, 'build/output/deps_status.csv')
         
     except Exception as e:
