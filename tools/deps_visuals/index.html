@@ -17,6 +17,7 @@
   <div class="file-inputs">
     <label>deps.txt: <input type="file" id="depsFile" accept=".txt"></label>
     <label>deps_status.csv: <input type="file" id="statusFile" accept=".csv"></label>
+    <label>Исключить зависимости (через запятую): <input type="text" id="excludeDeps" placeholder="например: bloc, http"></label>
     <button id="buildGraph">Построить граф</button>
   </div>
   <div id="network"></div>
@@ -43,7 +44,10 @@
       if (!statusCsv) { alert('Пожалуйста, выберите файл deps_status.csv'); return; }
       const depsData = parseDepsTxt(depsText);
       const statusData = parseStatusCsv(statusCsv);
-      buildGraph(depsData, statusData);
+      // Получаем список исключаемых зависимостей
+      const excludeInput = document.getElementById('excludeDeps').value;
+      const excludeList = excludeInput.split(',').map(s => s.trim()).filter(Boolean);
+      buildGraph(depsData, statusData, excludeList);
     };
     function parseDepsTxt(text) {
       const lines = text.split(/\r?\n/);
@@ -114,7 +118,7 @@
       }
       return map;
     }
-    function buildGraph(depsData, statusData) {
+    function buildGraph(depsData, statusData, excludeList = []) {
       // 1. Вычисляем глубину (уровень) для каждой зависимости
       const depthMap = {};
       const visited = new Set();
@@ -140,15 +144,36 @@
         if (!layers[depth]) layers[depth] = [];
         layers[depth].push(name);
       });
-      // 3. Задаём координаты по кругам
+      // 3. Исключаем зависимости и транзитивно оторванные
+      const excludeSet = new Set(excludeList);
+      // Строим новый список рёбер без исключённых
+      const filteredEdges = depsData.edges.filter(edge =>
+        !excludeSet.has(edge.from) && !excludeSet.has(edge.to)
+      );
+      // BFS от корня по новым рёбрам, чтобы найти все достижимые узлы
+      const reachable = new Set();
+      const queue = [depsData.root];
+      while (queue.length) {
+        const node = queue.shift();
+        if (reachable.has(node) || excludeSet.has(node)) continue;
+        reachable.add(node);
+        filteredEdges.forEach(edge => {
+          if (edge.from === node && !reachable.has(edge.to) && !excludeSet.has(edge.to)) {
+            queue.push(edge.to);
+          }
+        });
+      }
+      // 4. Готовим узлы и рёбра только для достижимых
       const nodes = [];
       const edges = [];
       const RADIUS_STEP = 350;
       const CENTER_X = 0, CENTER_Y = 0;
       layers.forEach((layer, depth) => {
-        const count = layer.length;
+        // Только достижимые и не исключённые
+        const filteredLayer = layer.filter(dep => reachable.has(dep) && !excludeSet.has(dep));
+        const count = filteredLayer.length;
         const radius = depth * RADIUS_STEP;
-        layer.forEach((dep, i) => {
+        filteredLayer.forEach((dep, i) => {
           const angle = (2 * Math.PI * i) / count;
           const x = depth === 0 ? CENTER_X : Math.round(CENTER_X + radius * Math.cos(angle));
           const y = depth === 0 ? CENTER_Y : Math.round(CENTER_Y + radius * Math.sin(angle));
@@ -172,9 +197,11 @@
           });
         });
       });
-      // Рёбра
-      depsData.edges.forEach(edge => {
-        edges.push({ from: edge.from, to: edge.to, arrows: 'to' });
+      // Рёбра только между достижимыми и не исключёнными
+      filteredEdges.forEach(edge => {
+        if (reachable.has(edge.from) && reachable.has(edge.to)) {
+          edges.push({ from: edge.from, to: edge.to, arrows: 'to' });
+        }
       });
       const container = document.getElementById('network');
       container.innerHTML = '';
