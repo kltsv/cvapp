@@ -187,13 +187,31 @@
           const x = depth === 0 ? CENTER_X : Math.round(CENTER_X + radius * Math.cos(angle));
           const y = depth === 0 ? CENTER_Y : Math.round(CENTER_Y + radius * Math.sin(angle));
           const status = statusData[dep];
-          let label = `<b>${dep}</b>`;
+          let emoji = '';
+          if (status && status.latest_version_published) {
+            const dateStr = status.latest_version_published.replace(/\./g, '-');
+            const date = new Date(dateStr);
+            
+            if (!isNaN(date.getTime())) {
+              const now = new Date();
+              const diffMonths = (now.getFullYear() - date.getFullYear()) * 12 + (now.getMonth() - date.getMonth());
+              if (diffMonths >= 24) {
+                emoji = `🔴`;
+              } else if (diffMonths >= 12) {
+                emoji = `🟠`;
+              } else if (diffMonths >= 6) {
+                emoji = `🟡`;
+              }
+            }
+          }
+          let label = `<b>${dep}</b> ${emoji}`;
           if (status) {
             label += `\nлокальная: ${status.dep_local_version || ''}`;
             if (status.dep_latest_version) label += `\nпоследняя: ${status.dep_latest_version}`;
             if (status.outdated) label += `\nустарела: ${status.outdated}`;
             if (status.latest_version_published) label += `\nопубликовано: ${status.latest_version_published}`;
           }
+          // ---
           // --- Цветовое кодирование ---
           let color = undefined;
           if (dep === depsData.root) {
