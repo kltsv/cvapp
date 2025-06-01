@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Визуализация графа зависимостей Dart/Flutter</title>
+  <script type="text/javascript" src="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js"></script>
+  <link href="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.css" rel="stylesheet" type="text/css" />
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #network { width: 100%; height: 80vh; border: 1px solid #ccc; margin-top: 20px; }
+    .file-inputs { margin-bottom: 20px; }
+    .file-inputs label { margin-right: 10px; }
+  </style>
+</head>
+<body>
+  <h2>Визуализация графа зависимостей Dart/Flutter</h2>
+  <div class="file-inputs">
+    <label>deps.txt: <input type="file" id="depsFile" accept=".txt"></label>
+    <label>deps_status.csv: <input type="file" id="statusFile" accept=".csv"></label>
+    <button id="buildGraph">Построить граф</button>
+  </div>
+  <div id="network"></div>
+  <script>
+    let depsText = '', statusCsv = '';
+    document.getElementById('depsFile').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) { depsText = evt.target.result; };
+        reader.readAsText(file);
+      }
+    });
+    document.getElementById('statusFile').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) { statusCsv = evt.target.result; };
+        reader.readAsText(file);
+      }
+    });
+    document.getElementById('buildGraph').onclick = function() {
+      if (!depsText) { alert('Пожалуйста, выберите файл deps.txt'); return; }
+      if (!statusCsv) { alert('Пожалуйста, выберите файл deps_status.csv'); return; }
+      const depsData = parseDepsTxt(depsText);
+      const statusData = parseStatusCsv(statusCsv);
+      buildGraph(depsData, statusData);
+    };
+    function parseDepsTxt(text) {
+      const lines = text.split(/\r?\n/);
+      let root = null;
+      let section = null;
+      const deps = {};
+      const edges = [];
+      const allDeps = new Set();
+      let directDeps = [];
+      let devDeps = [];
+      // Найдём корневую библиотеку (третья строка, например: my_lib 1.0.0)
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].trim() && !lines[i].startsWith('Dart SDK') && !lines[i].startsWith('Flutter SDK')) {
+          root = lines[i].trim().split(' ')[0];
+          break;
+        }
+      }
+      // Парсим зависимости
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        if (line === 'dependencies:') { section = 'dependencies'; continue; }
+        if (line === 'dev dependencies:') { section = 'dev dependencies'; continue; }
+        if (line === 'transitive dependencies:') { section = 'transitive dependencies'; continue; }
+        if (line.startsWith('- ')) {
+          const match = line.match(/^- ([^\s]+) ([^\s]+)(?: \[([^\]]+)\])?/);
+          if (match) {
+            const name = match[1];
+            const version = match[2];
+            const children = match[3] ? match[3].split(/,? /).filter(Boolean) : [];
+            deps[name] = deps[name] || { name, version, children: [] };
+            deps[name].children = children;
+            allDeps.add(name);
+            children.forEach(child => allDeps.add(child));
+            if (section === 'dependencies') directDeps.push(name);
+            if (section === 'dev dependencies') devDeps.push(name);
+          }
+        }
+      }
+      // Добавим корневой узел
+      if (root && !deps[root]) {
+        deps[root] = { name: root, version: '', children: [] };
+        allDeps.add(root);
+      }
+      // Связи: корень -> только прямые зависимости
+      directDeps.forEach(dep => edges.push({ from: root, to: dep }));
+      devDeps.forEach(dep => edges.push({ from: root, to: dep }));
+      // Связи: зависимости -> их children
+      Object.values(deps).forEach(dep => {
+        dep.children.forEach(child => {
+          edges.push({ from: dep.name, to: child });
+        });
+      });
+      return { root, deps, edges, allDeps: Array.from(allDeps) };
+    }
+    function parseStatusCsv(csv) {
+      const lines = csv.split(/\r?\n/).filter(Boolean);
+      const header = lines[0].split(',');
+      const map = {};
+      for (let i = 1; i < lines.length; i++) {
+        const row = lines[i].split(',');
+        if (row.length < 2) continue;
+        const dep_name = row[0];
+        map[dep_name] = {};
+        header.forEach((h, idx) => {
+          map[dep_name][h] = row[idx];
+        });
+      }
+      return map;
+    }
+    function buildGraph(depsData, statusData) {
+      // 1. Вычисляем глубину (уровень) для каждой зависимости
+      const depthMap = {};
+      const visited = new Set();
+      function bfsLevels(root) {
+        const queue = [{ name: root, depth: 0 }];
+        while (queue.length) {
+          const { name, depth } = queue.shift();
+          if (visited.has(name)) continue;
+          visited.add(name);
+          depthMap[name] = depth;
+          // ищем детей
+          depsData.edges.forEach(edge => {
+            if (edge.from === name && !visited.has(edge.to)) {
+              queue.push({ name: edge.to, depth: depth + 1 });
+            }
+          });
+        }
+      }
+      bfsLevels(depsData.root);
+      // 2. Группируем по слоям
+      const layers = [];
+      Object.entries(depthMap).forEach(([name, depth]) => {
+        if (!layers[depth]) layers[depth] = [];
+        layers[depth].push(name);
+      });
+      // 3. Задаём координаты по кругам
+      const nodes = [];
+      const edges = [];
+      const RADIUS_STEP = 350;
+      const CENTER_X = 0, CENTER_Y = 0;
+      layers.forEach((layer, depth) => {
+        const count = layer.length;
+        const radius = depth * RADIUS_STEP;
+        layer.forEach((dep, i) => {
+          const angle = (2 * Math.PI * i) / count;
+          const x = depth === 0 ? CENTER_X : Math.round(CENTER_X + radius * Math.cos(angle));
+          const y = depth === 0 ? CENTER_Y : Math.round(CENTER_Y + radius * Math.sin(angle));
+          const status = statusData[dep];
+          let label = `<b>${dep}</b>`;
+          if (status) {
+            label += `\nлокальная: ${status.dep_local_version || ''}`;
+            if (status.dep_latest_version) label += `\nпоследняя: ${status.dep_latest_version}`;
+            if (status.outdated) label += `\nустарела: ${status.outdated}`;
+            if (status.latest_version_published) label += `\nопубликовано: ${status.latest_version_published}`;
+          }
+          nodes.push({
+            id: dep,
+            label,
+            shape: 'box',
+            color: dep === depsData.root ? { background: '#e3f2fd', border: '#1976d2' } : undefined,
+            font: { multi: 'html', size: 14, bold: dep === depsData.root },
+            borderWidth: dep === depsData.root ? 3 : 1,
+            group: dep === depsData.root ? 'root' : undefined,
+            x, y, fixed: true
+          });
+        });
+      });
+      // Рёбра
+      depsData.edges.forEach(edge => {
+        edges.push({ from: edge.from, to: edge.to, arrows: 'to' });
+      });
+      const container = document.getElementById('network');
+      container.innerHTML = '';
+      const data = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
+      const options = {
+        physics: false,
+        nodes: {
+          shape: 'box',
+          margin: 10,
+          font: { multi: 'html', size: 14 },
+        },
+        edges: {
+          arrows: 'to',
+          smooth: { type: 'dynamic' },
+        },
+        groups: {
+          root: {
+            color: { background: '#e3f2fd', border: '#1976d2' },
+            borderWidth: 3,
+          }
+        }
+      };
+      new vis.Network(container, data, options);
+    }
+  </script>
+</body>
+</html> 
