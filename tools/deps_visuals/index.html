@@ -164,6 +164,15 @@
         });
       }
       // 4. Готовим узлы и рёбра только для достижимых
+      // --- Новый блок: ищем максимальное outdated среди достижимых ---
+      let maxOutdated = 0;
+      reachable.forEach(dep => {
+        const status = statusData[dep];
+        if (status && status.outdated && !isNaN(Number(status.outdated))) {
+          maxOutdated = Math.max(maxOutdated, Number(status.outdated));
+        }
+      });
+      // ---
       const nodes = [];
       const edges = [];
       const RADIUS_STEP = 350;
@@ -185,11 +194,33 @@
             if (status.outdated) label += `\nустарела: ${status.outdated}`;
             if (status.latest_version_published) label += `\nопубликовано: ${status.latest_version_published}`;
           }
+          // --- Цветовое кодирование ---
+          let color = undefined;
+          if (dep === depsData.root) {
+            color = { background: '#e3f2fd', border: '#1976d2', highlight: { background: '#e3f2fd', border: '#1976d2' }, hover: { background: '#e3f2fd', border: '#1976d2' } };
+          } else if (status && status.outdated && !isNaN(Number(status.outdated)) && maxOutdated > 0 && Number(status.outdated) > 0) {
+            // Градиент от #e3f2fd (min, синий) до #b71c1c (max, красный)
+            const minColor = [227, 242, 253]; // #e3f2fd
+            const maxColor = [183, 28, 28];   // #b71c1c
+            const ratio = Math.min(1, Number(status.outdated) / maxOutdated);
+            const r = Math.round(minColor[0] + (maxColor[0] - minColor[0]) * ratio);
+            const g = Math.round(minColor[1] + (maxColor[1] - minColor[1]) * ratio);
+            const b = Math.round(minColor[2] + (maxColor[2] - minColor[2]) * ratio);
+            const bg = `rgb(${r},${g},${b})`;
+            color = {
+              background: bg, border: '#b71c1c',
+              highlight: { background: bg, border: '#b71c1c' },
+              hover: { background: bg, border: '#b71c1c' }
+            };
+          } else {
+            color = { background: '#e3f2fd', border: '#1976d2', highlight: { background: '#e3f2fd', border: '#1976d2' }, hover: { background: '#e3f2fd', border: '#1976d2' } };
+          }
+          // ---
           nodes.push({
             id: dep,
             label,
             shape: 'box',
-            color: dep === depsData.root ? { background: '#e3f2fd', border: '#1976d2' } : undefined,
+            color,
             font: { multi: 'html', size: 14, bold: dep === depsData.root },
             borderWidth: dep === depsData.root ? 3 : 1,
             group: dep === depsData.root ? 'root' : undefined,
