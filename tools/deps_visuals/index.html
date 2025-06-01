@@ -226,13 +226,73 @@
             const edges = [];
             const RADIUS_STEP = 350;
             const CENTER_X = 0, CENTER_Y = 0;
+            // Для каждого слоя вычисляем углы
+            const nodeAngles = {};
+            // Первый слой (корень) — в центре
+            if (layers[0] && layers[0].length === 1) {
+                nodeAngles[layers[0][0]] = 0;
+            }
+            // Первый радиальный слой (прямые зависимости) — равномерно
+            if (layers[1]) {
+                const count = layers[1].length;
+                layers[1].forEach((dep, i) => {
+                    nodeAngles[dep] = (2 * Math.PI * i) / count;
+                });
+            }
+            // Остальные слои — по среднему углу родителей
+            for (let depth = 2; depth < layers.length; depth++) {
+                const prevLayer = layers[depth - 1];
+                const prevSet = new Set(prevLayer);
+                // Для каждого узла ищем родителей на предыдущем слое
+                const angleList = [];
+                layers[depth].forEach(dep => {
+                    // Родители — те, у кого есть ребро dep -> этот dep
+                    const parents = depsData.edges.filter(e => e.to === dep && prevSet.has(e.from)).map(e => e.from);
+                    if (parents.length === 0) {
+                        angleList.push({ dep, angle: 0 });
+                        return;
+                    }
+                    // Средний угол родителей
+                    let sumSin = 0, sumCos = 0;
+                    parents.forEach(p => {
+                        const a = nodeAngles[p] ?? 0;
+                        sumSin += Math.sin(a);
+                        sumCos += Math.cos(a);
+                    });
+                    const avgAngle = Math.atan2(sumSin / parents.length, sumCos / parents.length);
+                    // atan2 может вернуть отрицательный угол, нормализуем
+                    const normAngle = (avgAngle + 2 * Math.PI) % (2 * Math.PI);
+                    angleList.push({ dep, angle: normAngle });
+                });
+                // Сортируем по среднему углу
+                angleList.sort((a, b) => a.angle - b.angle);
+                // --- Минимальный угол между узлами ---
+                const minAngle = 0.12; // ~7 градусов
+                for (let i = 1; i < angleList.length; i++) {
+                    if (angleList[i].angle - angleList[i-1].angle < minAngle) {
+                        angleList[i].angle = angleList[i-1].angle + minAngle;
+                    }
+                }
+                // Если последний и первый слишком близко (по кругу), чуть раздвинуть последний
+                if (angleList.length > 1 && (angleList[0].angle + 2 * Math.PI - angleList[angleList.length-1].angle) < minAngle) {
+                    angleList[angleList.length-1].angle = angleList[0].angle - 2 * Math.PI + minAngle;
+                }
+                // Расставляем по кругу в этом порядке
+                const count = angleList.length;
+                angleList.forEach((item, i) => {
+                    // Чтобы не было наложения, чуть раздвигаем вокруг среднего угла
+                    const spread = Math.PI / count; // небольшой разброс
+                    const angle = item.angle + (i - count / 2) * (spread / count);
+                    nodeAngles[item.dep] = angle;
+                });
+            }
+            // Теперь размещаем узлы по рассчитанным углам
             layers.forEach((layer, depth) => {
                 // Только достижимые и не исключённые
                 const filteredLayer = layer.filter(dep => reachable.has(dep) && !excludeSet.has(dep));
-                const count = filteredLayer.length;
                 const radius = depth * RADIUS_STEP;
-                filteredLayer.forEach((dep, i) => {
-                    const angle = (2 * Math.PI * i) / count;
+                filteredLayer.forEach(dep => {
+                    const angle = nodeAngles[dep] ?? 0;
                     const x = depth === 0 ? CENTER_X : Math.round(CENTER_X + radius * Math.cos(angle));
                     const y = depth === 0 ? CENTER_Y : Math.round(CENTER_Y + radius * Math.sin(angle));
                     const status = statusData[dep];
