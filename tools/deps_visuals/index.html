@@ -1,280 +1,330 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
-  <meta charset="UTF-8">
-  <title>Визуализация графа зависимостей Dart/Flutter</title>
-  <script type="text/javascript" src="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js"></script>
-  <link href="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.css" rel="stylesheet" type="text/css" />
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    #network { width: 100%; height: 80vh; border: 1px solid #ccc; margin-top: 20px; }
-    .file-inputs { margin-bottom: 20px; }
-    .file-inputs label { margin-right: 10px; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Визуализация графа зависимостей Dart/Flutter</title>
+    <script type="text/javascript" src="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js"></script>
+    <link href="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.css" rel="stylesheet" type="text/css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        #network {
+            width: 100%;
+            height: 80vh;
+            border: 1px solid #ccc;
+            margin-top: 20px;
+        }
+
+        .file-inputs {
+            margin-bottom: 20px;
+        }
+
+        .file-inputs label {
+            margin-right: 10px;
+        }
+    </style>
 </head>
+
 <body>
-  <h2>Визуализация графа зависимостей Dart/Flutter</h2>
-  <div class="file-inputs">
-    <label>deps.txt: <input type="file" id="depsFile" accept=".txt"></label>
-    <label>deps_status.csv: <input type="file" id="statusFile" accept=".csv"></label>
-    <label>Исключить зависимости (через запятую): <input type="text" id="excludeDeps" placeholder="например: bloc, http"></label>
-    <button id="buildGraph">Построить граф</button>
-  </div>
-  <div id="network"></div>
-  <script>
-    let depsText = '', statusCsv = '';
-    document.getElementById('depsFile').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(evt) { depsText = evt.target.result; };
-        reader.readAsText(file);
-      }
-    });
-    document.getElementById('statusFile').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(evt) { statusCsv = evt.target.result; };
-        reader.readAsText(file);
-      }
-    });
-    document.getElementById('buildGraph').onclick = function() {
-      if (!depsText) { alert('Пожалуйста, выберите файл deps.txt'); return; }
-      if (!statusCsv) { alert('Пожалуйста, выберите файл deps_status.csv'); return; }
-      const depsData = parseDepsTxt(depsText);
-      const statusData = parseStatusCsv(statusCsv);
-      // Получаем список исключаемых зависимостей
-      const excludeInput = document.getElementById('excludeDeps').value;
-      const excludeList = excludeInput.split(',').map(s => s.trim()).filter(Boolean);
-      buildGraph(depsData, statusData, excludeList);
-    };
-    function parseDepsTxt(text) {
-      const lines = text.split(/\r?\n/);
-      let root = null;
-      let section = null;
-      const deps = {};
-      const edges = [];
-      const allDeps = new Set();
-      let directDeps = [];
-      let devDeps = [];
-      // Найдём корневую библиотеку (третья строка, например: my_lib 1.0.0)
-      for (let i = 0; i < lines.length; i++) {
-        if (lines[i].trim() && !lines[i].startsWith('Dart SDK') && !lines[i].startsWith('Flutter SDK')) {
-          root = lines[i].trim().split(' ')[0];
-          break;
-        }
-      }
-      // Парсим зависимости
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
-        if (line === 'dependencies:') { section = 'dependencies'; continue; }
-        if (line === 'dev dependencies:') { section = 'dev dependencies'; continue; }
-        if (line === 'transitive dependencies:') { section = 'transitive dependencies'; continue; }
-        if (line.startsWith('- ')) {
-          const match = line.match(/^- ([^\s]+) ([^\s]+)(?: \[([^\]]+)\])?/);
-          if (match) {
-            const name = match[1];
-            const version = match[2];
-            const children = match[3] ? match[3].split(/,? /).filter(Boolean) : [];
-            deps[name] = deps[name] || { name, version, children: [] };
-            deps[name].children = children;
-            allDeps.add(name);
-            children.forEach(child => allDeps.add(child));
-            if (section === 'dependencies') directDeps.push(name);
-            if (section === 'dev dependencies') devDeps.push(name);
-          }
-        }
-      }
-      // Добавим корневой узел
-      if (root && !deps[root]) {
-        deps[root] = { name: root, version: '', children: [] };
-        allDeps.add(root);
-      }
-      // Связи: корень -> только прямые зависимости
-      directDeps.forEach(dep => edges.push({ from: root, to: dep }));
-      devDeps.forEach(dep => edges.push({ from: root, to: dep }));
-      // Связи: зависимости -> их children
-      Object.values(deps).forEach(dep => {
-        dep.children.forEach(child => {
-          edges.push({ from: dep.name, to: child });
-        });
-      });
-      return { root, deps, edges, allDeps: Array.from(allDeps) };
-    }
-    function parseStatusCsv(csv) {
-      const lines = csv.split(/\r?\n/).filter(Boolean);
-      const header = lines[0].split(',');
-      const map = {};
-      for (let i = 1; i < lines.length; i++) {
-        const row = lines[i].split(',');
-        if (row.length < 2) continue;
-        const dep_name = row[0];
-        map[dep_name] = {};
-        header.forEach((h, idx) => {
-          map[dep_name][h] = row[idx];
-        });
-      }
-      return map;
-    }
-    function buildGraph(depsData, statusData, excludeList = []) {
-      // 1. Вычисляем глубину (уровень) для каждой зависимости
-      const depthMap = {};
-      const visited = new Set();
-      function bfsLevels(root) {
-        const queue = [{ name: root, depth: 0 }];
-        while (queue.length) {
-          const { name, depth } = queue.shift();
-          if (visited.has(name)) continue;
-          visited.add(name);
-          depthMap[name] = depth;
-          // ищем детей
-          depsData.edges.forEach(edge => {
-            if (edge.from === name && !visited.has(edge.to)) {
-              queue.push({ name: edge.to, depth: depth + 1 });
+    <h2>Визуализация графа зависимостей Dart/Flutter</h2>
+    <div class="file-inputs">
+        <label>deps.txt: <input type="file" id="depsFile" accept=".txt"></label>
+        <label>deps_status.csv: <input type="file" id="statusFile" accept=".csv"></label>
+        <label>Исключить зависимости (через запятую): <input type="text" id="excludeDeps"
+                placeholder="например: bloc, http"></label>
+        <button id="buildGraph">Построить граф</button>
+    </div>
+    <div id="network"></div>
+    <script>
+        let depsText = '', statusCsv = '';
+        document.getElementById('depsFile').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (evt) { depsText = evt.target.result; };
+                reader.readAsText(file);
             }
-          });
-        }
-      }
-      bfsLevels(depsData.root);
-      // 2. Группируем по слоям
-      const layers = [];
-      Object.entries(depthMap).forEach(([name, depth]) => {
-        if (!layers[depth]) layers[depth] = [];
-        layers[depth].push(name);
-      });
-      // 3. Исключаем зависимости и транзитивно оторванные
-      const excludeSet = new Set(excludeList);
-      // Строим новый список рёбер без исключённых
-      const filteredEdges = depsData.edges.filter(edge =>
-        !excludeSet.has(edge.from) && !excludeSet.has(edge.to)
-      );
-      // BFS от корня по новым рёбрам, чтобы найти все достижимые узлы
-      const reachable = new Set();
-      const queue = [depsData.root];
-      while (queue.length) {
-        const node = queue.shift();
-        if (reachable.has(node) || excludeSet.has(node)) continue;
-        reachable.add(node);
-        filteredEdges.forEach(edge => {
-          if (edge.from === node && !reachable.has(edge.to) && !excludeSet.has(edge.to)) {
-            queue.push(edge.to);
-          }
         });
-      }
-      // 4. Готовим узлы и рёбра только для достижимых
-      // --- Новый блок: ищем максимальное outdated среди достижимых ---
-      let maxOutdated = 0;
-      reachable.forEach(dep => {
-        const status = statusData[dep];
-        if (status && status.outdated && !isNaN(Number(status.outdated))) {
-          maxOutdated = Math.max(maxOutdated, Number(status.outdated));
-        }
-      });
-      // ---
-      const nodes = [];
-      const edges = [];
-      const RADIUS_STEP = 350;
-      const CENTER_X = 0, CENTER_Y = 0;
-      layers.forEach((layer, depth) => {
-        // Только достижимые и не исключённые
-        const filteredLayer = layer.filter(dep => reachable.has(dep) && !excludeSet.has(dep));
-        const count = filteredLayer.length;
-        const radius = depth * RADIUS_STEP;
-        filteredLayer.forEach((dep, i) => {
-          const angle = (2 * Math.PI * i) / count;
-          const x = depth === 0 ? CENTER_X : Math.round(CENTER_X + radius * Math.cos(angle));
-          const y = depth === 0 ? CENTER_Y : Math.round(CENTER_Y + radius * Math.sin(angle));
-          const status = statusData[dep];
-          let emoji = '';
-          if (status && status.latest_version_published) {
-            const dateStr = status.latest_version_published.replace(/\./g, '-');
-            const date = new Date(dateStr);
-            
-            if (!isNaN(date.getTime())) {
-              const now = new Date();
-              const diffMonths = (now.getFullYear() - date.getFullYear()) * 12 + (now.getMonth() - date.getMonth());
-              if (diffMonths >= 24) {
-                emoji = `🔴`;
-              } else if (diffMonths >= 12) {
-                emoji = `🟠`;
-              } else if (diffMonths >= 6) {
-                emoji = `🟡`;
-              }
+        document.getElementById('statusFile').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (evt) { statusCsv = evt.target.result; };
+                reader.readAsText(file);
             }
-          }
-          let label = `<b>${dep}</b> ${emoji}`;
-          if (status) {
-            label += `\nлокальная: ${status.dep_local_version || ''}`;
-            if (status.dep_latest_version) label += `\nпоследняя: ${status.dep_latest_version}`;
-            if (status.outdated) label += `\nустарела: ${status.outdated}`;
-            if (status.latest_version_published) label += `\nопубликовано: ${status.latest_version_published}`;
-          }
-          // ---
-          // --- Цветовое кодирование ---
-          let color = undefined;
-          if (dep === depsData.root) {
-            color = { background: '#e3f2fd', border: '#1976d2', highlight: { background: '#e3f2fd', border: '#1976d2' }, hover: { background: '#e3f2fd', border: '#1976d2' } };
-          } else if (status && status.outdated && !isNaN(Number(status.outdated)) && maxOutdated > 0 && Number(status.outdated) > 0) {
-            // Градиент от #e3f2fd (min, синий) до #b71c1c (max, красный)
-            const minColor = [227, 242, 253]; // #e3f2fd
-            const maxColor = [183, 28, 28];   // #b71c1c
-            const ratio = Math.min(1, Number(status.outdated) / maxOutdated);
-            const r = Math.round(minColor[0] + (maxColor[0] - minColor[0]) * ratio);
-            const g = Math.round(minColor[1] + (maxColor[1] - minColor[1]) * ratio);
-            const b = Math.round(minColor[2] + (maxColor[2] - minColor[2]) * ratio);
-            const bg = `rgb(${r},${g},${b})`;
-            color = {
-              background: bg, border: '#b71c1c',
-              highlight: { background: bg, border: '#b71c1c' },
-              hover: { background: bg, border: '#b71c1c' }
+        });
+        document.getElementById('buildGraph').onclick = function () {
+            if (!depsText) { alert('Пожалуйста, выберите файл deps.txt'); return; }
+            if (!statusCsv) { alert('Пожалуйста, выберите файл deps_status.csv'); return; }
+            const depsData = parseDepsTxt(depsText);
+            const statusData = parseStatusCsv(statusCsv);
+            // Получаем список исключаемых зависимостей
+            const excludeInput = document.getElementById('excludeDeps').value;
+            const excludeList = excludeInput.split(',').map(s => s.trim()).filter(Boolean);
+            buildGraph(depsData, statusData, excludeList);
+        };
+        function parseDepsTxt(text) {
+            const lines = text.split(/\r?\n/);
+            let root = null;
+            let section = null;
+            const deps = {};
+            const edges = [];
+            const allDeps = new Set();
+            let directDeps = [];
+            let devDeps = [];
+            // Найдём корневую библиотеку (третья строка, например: my_lib 1.0.0)
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].trim() && !lines[i].startsWith('Dart SDK') && !lines[i].startsWith('Flutter SDK')) {
+                    root = lines[i].trim().split(' ')[0];
+                    break;
+                }
+            }
+            // Парсим зависимости
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                if (line === 'dependencies:') { section = 'dependencies'; continue; }
+                if (line === 'dev dependencies:') { section = 'dev dependencies'; continue; }
+                if (line === 'transitive dependencies:') { section = 'transitive dependencies'; continue; }
+                if (line.startsWith('- ')) {
+                    const match = line.match(/^- ([^\s]+) ([^\s]+)(?: \[([^\]]+)\])?/);
+                    if (match) {
+                        const name = match[1];
+                        const version = match[2];
+                        const children = match[3] ? match[3].split(/,? /).filter(Boolean) : [];
+                        deps[name] = deps[name] || { name, version, children: [] };
+                        deps[name].children = children;
+                        allDeps.add(name);
+                        children.forEach(child => allDeps.add(child));
+                        if (section === 'dependencies') directDeps.push(name);
+                        if (section === 'dev dependencies') devDeps.push(name);
+                    }
+                }
+            }
+            // Добавим корневой узел
+            if (root && !deps[root]) {
+                deps[root] = { name: root, version: '', children: [] };
+                allDeps.add(root);
+            }
+            // Связи: корень -> только прямые зависимости
+            directDeps.forEach(dep => edges.push({ from: root, to: dep }));
+            devDeps.forEach(dep => edges.push({ from: root, to: dep }));
+            // Связи: зависимости -> их children
+            Object.values(deps).forEach(dep => {
+                dep.children.forEach(child => {
+                    edges.push({ from: dep.name, to: child });
+                });
+            });
+            return { root, deps, edges, allDeps: Array.from(allDeps) };
+        }
+        function parseStatusCsv(csv) {
+            const lines = csv.split(/\r?\n/).filter(Boolean);
+            const header = lines[0].split(',');
+            const map = {};
+            for (let i = 1; i < lines.length; i++) {
+                const row = lines[i].split(',');
+                if (row.length < 2) continue;
+                const dep_name = row[0];
+                map[dep_name] = {};
+                header.forEach((h, idx) => {
+                    map[dep_name][h] = row[idx];
+                });
+            }
+            return map;
+        }
+        function buildGraph(depsData, statusData, excludeList = []) {
+            // 1. Вычисляем глубину (уровень) для каждой зависимости
+            const depthMap = {};
+            const visited = new Set();
+            function bfsLevels(root) {
+                const queue = [{ name: root, depth: 0 }];
+                while (queue.length) {
+                    const { name, depth } = queue.shift();
+                    if (visited.has(name)) continue;
+                    visited.add(name);
+                    depthMap[name] = depth;
+                    // ищем детей
+                    depsData.edges.forEach(edge => {
+                        if (edge.from === name && !visited.has(edge.to)) {
+                            queue.push({ name: edge.to, depth: depth + 1 });
+                        }
+                    });
+                }
+            }
+            bfsLevels(depsData.root);
+
+            // 3. Исключаем зависимости и транзитивно оторванные
+            const excludeSet = new Set(excludeList);
+            // Строим новый список рёбер без исключённых
+            const filteredEdges = depsData.edges.filter(edge =>
+                !excludeSet.has(edge.from) && !excludeSet.has(edge.to)
+            );
+            // BFS от корня по новым рёбрам, чтобы найти все достижимые узлы
+            const reachable = new Set();
+            const queue = [depsData.root];
+            while (queue.length) {
+                const node = queue.shift();
+                if (reachable.has(node) || excludeSet.has(node)) continue;
+                reachable.add(node);
+                filteredEdges.forEach(edge => {
+                    if (edge.from === node && !reachable.has(edge.to) && !excludeSet.has(edge.to)) {
+                        queue.push(edge.to);
+                    }
+                });
+            }
+
+            // --- Корректировка слоёв для устранения горизонтальных связей ---
+            let changed = true;
+            while (changed) {
+                changed = false;
+                depsData.edges.forEach(edge => {
+                    if (
+                        reachable.has(edge.from) && reachable.has(edge.to) &&
+                        depthMap[edge.from] === depthMap[edge.to]
+                    ) {
+                        // Углубляем to и всех его потомков, если нужно
+                        const stack = [edge.to];
+                        while (stack.length) {
+                            const node = stack.pop();
+                            if (depthMap[node] <= depthMap[edge.from]) {
+                                depthMap[node] = depthMap[edge.from] + 1;
+                                changed = true;
+                                // Добавляем всех детей node
+                                depsData.edges.forEach(e2 => {
+                                    if (e2.from === node && reachable.has(e2.to)) {
+                                        stack.push(e2.to);
+                                    }
+                                });
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 2. Группируем по слоям
+            const layers = [];
+            Object.entries(depthMap).forEach(([name, depth]) => {
+                if (!layers[depth]) layers[depth] = [];
+                layers[depth].push(name);
+            });
+
+            // 4. Готовим узлы и рёбра только для достижимых
+            // --- Новый блок: ищем максимальное outdated среди достижимых ---
+            let maxOutdated = 0;
+            reachable.forEach(dep => {
+                const status = statusData[dep];
+                if (status && status.outdated && !isNaN(Number(status.outdated))) {
+                    maxOutdated = Math.max(maxOutdated, Number(status.outdated));
+                }
+            });
+            // ---
+            const nodes = [];
+            const edges = [];
+            const RADIUS_STEP = 350;
+            const CENTER_X = 0, CENTER_Y = 0;
+            layers.forEach((layer, depth) => {
+                // Только достижимые и не исключённые
+                const filteredLayer = layer.filter(dep => reachable.has(dep) && !excludeSet.has(dep));
+                const count = filteredLayer.length;
+                const radius = depth * RADIUS_STEP;
+                filteredLayer.forEach((dep, i) => {
+                    const angle = (2 * Math.PI * i) / count;
+                    const x = depth === 0 ? CENTER_X : Math.round(CENTER_X + radius * Math.cos(angle));
+                    const y = depth === 0 ? CENTER_Y : Math.round(CENTER_Y + radius * Math.sin(angle));
+                    const status = statusData[dep];
+                    let emoji = '';
+                    if (status && status.latest_version_published) {
+                        const dateStr = status.latest_version_published.replace(/\./g, '-');
+                        const date = new Date(dateStr);
+
+                        if (!isNaN(date.getTime())) {
+                            const now = new Date();
+                            const diffMonths = (now.getFullYear() - date.getFullYear()) * 12 + (now.getMonth() - date.getMonth());
+                            if (diffMonths >= 24) {
+                                emoji = `🔴`;
+                            } else if (diffMonths >= 12) {
+                                emoji = `🟠`;
+                            } else if (diffMonths >= 6) {
+                                emoji = `🟡`;
+                            }
+                        }
+                    }
+                    let label = `<b>${dep}</b> ${emoji}`;
+                    if (status) {
+                        label += `\nлокальная: ${status.dep_local_version || ''}`;
+                        if (status.dep_latest_version) label += `\nпоследняя: ${status.dep_latest_version}`;
+                        if (status.outdated) label += `\nустарела: ${status.outdated}`;
+                        if (status.latest_version_published) label += `\nопубликовано: ${status.latest_version_published}`;
+                    }
+                    // ---
+                    // --- Цветовое кодирование ---
+                    let color = undefined;
+                    if (dep === depsData.root) {
+                        color = { background: '#e3f2fd', border: '#1976d2', highlight: { background: '#e3f2fd', border: '#1976d2' }, hover: { background: '#e3f2fd', border: '#1976d2' } };
+                    } else if (status && status.outdated && !isNaN(Number(status.outdated)) && maxOutdated > 0 && Number(status.outdated) > 0) {
+                        // Градиент от #e3f2fd (min, синий) до #b71c1c (max, красный)
+                        const minColor = [227, 242, 253]; // #e3f2fd
+                        const maxColor = [183, 28, 28];   // #b71c1c
+                        const ratio = Math.min(1, Number(status.outdated) / maxOutdated);
+                        const r = Math.round(minColor[0] + (maxColor[0] - minColor[0]) * ratio);
+                        const g = Math.round(minColor[1] + (maxColor[1] - minColor[1]) * ratio);
+                        const b = Math.round(minColor[2] + (maxColor[2] - minColor[2]) * ratio);
+                        const bg = `rgb(${r},${g},${b})`;
+                        color = {
+                            background: bg, border: '#b71c1c',
+                            highlight: { background: bg, border: '#b71c1c' },
+                            hover: { background: bg, border: '#b71c1c' }
+                        };
+                    } else {
+                        color = { background: '#e3f2fd', border: '#1976d2', highlight: { background: '#e3f2fd', border: '#1976d2' }, hover: { background: '#e3f2fd', border: '#1976d2' } };
+                    }
+                    // ---
+                    nodes.push({
+                        id: dep,
+                        label,
+                        shape: 'box',
+                        color,
+                        font: { multi: 'html', size: 14, bold: dep === depsData.root },
+                        borderWidth: dep === depsData.root ? 3 : 1,
+                        group: dep === depsData.root ? 'root' : undefined,
+                        x, y, fixed: true
+                    });
+                });
+            });
+            // Рёбра только между достижимыми и не исключёнными
+            filteredEdges.forEach(edge => {
+                if (reachable.has(edge.from) && reachable.has(edge.to)) {
+                    edges.push({ from: edge.from, to: edge.to, arrows: 'to' });
+                }
+            });
+            const container = document.getElementById('network');
+            container.innerHTML = '';
+            const data = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
+            const options = {
+                physics: false,
+                nodes: {
+                    shape: 'box',
+                    margin: 10,
+                    font: { multi: 'html', size: 14 },
+                },
+                edges: {
+                    arrows: 'to',
+                    smooth: { type: 'dynamic' },
+                },
+                groups: {
+                    root: {
+                        color: { background: '#e3f2fd', border: '#1976d2' },
+                        borderWidth: 3,
+                    }
+                }
             };
-          } else {
-            color = { background: '#e3f2fd', border: '#1976d2', highlight: { background: '#e3f2fd', border: '#1976d2' }, hover: { background: '#e3f2fd', border: '#1976d2' } };
-          }
-          // ---
-          nodes.push({
-            id: dep,
-            label,
-            shape: 'box',
-            color,
-            font: { multi: 'html', size: 14, bold: dep === depsData.root },
-            borderWidth: dep === depsData.root ? 3 : 1,
-            group: dep === depsData.root ? 'root' : undefined,
-            x, y, fixed: true
-          });
-        });
-      });
-      // Рёбра только между достижимыми и не исключёнными
-      filteredEdges.forEach(edge => {
-        if (reachable.has(edge.from) && reachable.has(edge.to)) {
-          edges.push({ from: edge.from, to: edge.to, arrows: 'to' });
+            new vis.Network(container, data, options);
         }
-      });
-      const container = document.getElementById('network');
-      container.innerHTML = '';
-      const data = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
-      const options = {
-        physics: false,
-        nodes: {
-          shape: 'box',
-          margin: 10,
-          font: { multi: 'html', size: 14 },
-        },
-        edges: {
-          arrows: 'to',
-          smooth: { type: 'dynamic' },
-        },
-        groups: {
-          root: {
-            color: { background: '#e3f2fd', border: '#1976d2' },
-            borderWidth: 3,
-          }
-        }
-      };
-      new vis.Network(container, data, options);
-    }
-  </script>
+    </script>
 </body>
-</html> 
+
+</html>
