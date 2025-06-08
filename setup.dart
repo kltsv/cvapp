@@ -1,7 +1,7 @@
 // ignore_for_file: avoid_print
 import 'dart:io';
 
-const _flutterVersion = '3.19.3';
+const _flutterVersion = '3.32.2';
 
 void main() {
   _log('Setup project');
@@ -14,14 +14,14 @@ void main() {
   output = Process.runSync('fvm', ['install', version]);
   _handleProcessResult(output);
   _log('Use flutter version for this project: $version');
-  output = Process.runSync('fvm', ['use', version]);
+  output = Process.runSync('fvm', ['use', version, '--force']);
   _handleProcessResult(output);
   _log('fvm is ready');
 }
 
 String? _handleProcessResult(ProcessResult result) {
   final out = (result.stdout as String?)?.trim();
-  final err = (result.stdout as String?)?.trim();
+  final err = (result.stderr as String?)?.trim();
   if (result.exitCode == 0) {
     _log('Output: $out');
   } else {
